@@ -80,6 +80,7 @@ app.post("/voice", (request, response) => {
   response.send(twiml.toString());
 });
 
+// adds callee to the conference if they accept the outbound call
 app.post("/join", (req, res) => {
   console.log("In join conf");
   const twiml = new VoiceResponse();
@@ -89,7 +90,7 @@ app.post("/join", (req, res) => {
   res.send(twiml.toString());
 });
 
-// Endpoint to add other users to conference
+// Endpoint to add additional users to conference
 app.post("/addUser", (req, res) => {
   console.log("In add user");
   const phoneNumber = req.body.To;
@@ -102,14 +103,13 @@ app.post("/addUser", (req, res) => {
   });
 });
 
-// someone joined or left
-app.post("/fetchUsers", (req, res) => {
+// status callback endpoint where socket.io passes list to frontend
+app.post("/fetchUsers", (req) => {
   console.log("fetching");
   const client = new twilio(accountSid, authToken);
   client
     .conferences(req.body.ConferenceSid)
     .participants.list()
-    // .then((participants) => console.log(participants));
     .then((participants) => io.emit("fetchUserList", participants));
 });
 

@@ -4,7 +4,7 @@ class UserList extends React.Component {
   renderList() {
     const users = this.props.users;
     console.log(users);
-    return users
+    return users.length !== 0
       ? users.map((user) => {
           return (
             <div className="item">

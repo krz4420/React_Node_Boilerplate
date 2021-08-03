@@ -177,9 +177,12 @@ class App extends React.Component {
             text={this.state.log}
           />
         </div>
-        <AddUser handleOnClick={this.handleAddUser} />
         <div>
           <label>Active Users</label>
+          <AddUser
+            users={this.state.participants.length}
+            handleOnClick={this.handleAddUser}
+          />
           <UserList users={this.state.participants} />
         </div>
       </div>

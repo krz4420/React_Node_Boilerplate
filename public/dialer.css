@@ -27,6 +27,11 @@ label:focus,
   border-radius: 30px;
 }
 
+.user {
+  display: flex;
+  flex-direction: row;
+}
+
 .controls {
   display: flex;
   flex-direction: row;

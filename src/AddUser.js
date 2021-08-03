@@ -2,8 +2,13 @@ import React from "react";
 
 class AddUser extends React.Component {
   render() {
-    return (
-      <button onClick={this.props.handleOnClick}>Click To Add User</button>
+    return this.props.users != 0 ? (
+      <button class="ui basic button" onClick={this.props.handleOnClick}>
+        <i class="icon plus"></i>
+        Click To Add User "{this.props.users}"
+      </button>
+    ) : (
+      <div></div>
     );
   }
 }
