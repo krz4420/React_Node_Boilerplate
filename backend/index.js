@@ -1,6 +1,5 @@
 ("use strict");
-
-require("dotenv-safe").load();
+require("dotenv").config();
 const http = require("http");
 const express = require("express");
 const { urlencoded } = require("body-parser");
@@ -9,8 +8,22 @@ const ClientCapability = twilio.jwt.ClientCapability;
 const VoiceResponse = twilio.twiml.VoiceResponse;
 const accountSid = process.env.TWILIO_ACCOUNT_SID;
 const authToken = process.env.TWILIO_AUTH_TOKEN;
+
 const socket = require("socket.io");
 let app = express();
+
+const server = http.createServer(app);
+const port = process.env.PORT || 3000;
+server.listen(port, () => {
+  console.log(`Express Server listening on *:${port}`);
+});
+
+const io = socket(server);
+io.on("connection", (socket) => {
+  socket.on("disconnect", () => {
+    console.log("USER DQ");
+  });
+});
 
 // Generate a Twilio Client capability token
 app.get("/token", (request, response) => {
@@ -24,7 +37,6 @@ app.get("/token", (request, response) => {
       applicationSid: process.env.TWILIO_TWIML_APP_SID,
     })
   );
-
   const token = capability.toJwt();
   // Include token in a JSON response
   response.send({
@@ -80,7 +92,6 @@ app.post("/join", (req, res) => {
 // Endpoint to add other users to conference
 app.post("/addUser", (req, res) => {
   console.log("In add user");
-  console.log(req.body.to);
   const phoneNumber = req.body.To;
   const client = new twilio(accountSid, authToken);
 
@@ -98,20 +109,8 @@ app.post("/fetchUsers", (req, res) => {
   client
     .conferences(req.body.ConferenceSid)
     .participants.list()
-    .then((participants) => participants.forEach((p) => console.log(p)));
-});
-
-const server = http.createServer(app);
-const port = process.env.PORT || 3000;
-server.listen(port, () => {
-  console.log(`Express Server listening on *:${port}`);
-});
-
-const io = socket(server);
-io.on("connection", (socket) => {
-  socket.on("disconnect", () => {
-    console.log("USER DQ");
-  });
+    // .then((participants) => console.log(participants));
+    .then((participants) => io.emit("fetchUserList", participants));
 });
 
 module.exports = app;

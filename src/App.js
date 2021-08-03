@@ -4,11 +4,17 @@ import LogBox from "./LogBox";
 import CountrySelectBox from "./CountrySelectBox";
 import AddUser from "./AddUser";
 import CallButton from "./CallButton";
-import UserList from "./User";
+import UserList from "./UserList";
+import $ from "jquery";
+import { io } from "socket.io-client";
+
+const { Device } = require("twilio-client");
+const socket = io("https://55eec8196410.ngrok.io");
 
 class App extends React.Component {
-  getInitialState() {
-    return {
+  constructor(props) {
+    super(props);
+    this.state = {
       muted: false,
       log: "Connecting...",
       onPhone: false,
@@ -33,48 +39,60 @@ class App extends React.Component {
   }
 
   // Initialize after component creation
-  componentDidMount() {
+  componentDidMount = () => {
     console.log("Componenet Did mount");
 
+    socket.on("fetchUserList", (data) => {
+      this.setState({ participants: [] });
+      data.forEach((participant) =>
+        this.setState((prevState) => ({
+          participants: [...prevState.participants, participant.label],
+        }))
+      );
+    });
+
     // Fetch Twilio capability token from our Node.js server
-    $.getJSON("/token").done((data) => {
-      Twilio.Device.setup(data.token);
+    $.getJSON("/token")
+      .done((data) => {
+        console.log("Setting up token");
+        Device.setup(data.token);
+        console.log("Done with twilio setup");
+        this.setState({ log: "Connected" });
+      })
+      .fail(console.log("Did not work"));
+
+    Device.ready(() => {
+      console.log("Ready");
       this.setState({ log: "Connected" });
-      console.log("Setting up token");
     });
 
     // Configure event handlers for Twilio Device
-    Twilio.Device.disconnect(() => {
+    Device.disconnect(() => {
       this.setState({
         onPhone: false,
         log: "Call ended.",
         participants: [],
       });
     });
-
-    Twilio.Device.ready(() => {
-      console.log("Ready");
-      this.setState({ log: "Connected" });
-    });
-  }
+  };
   // ****** End of Component Did Mount
 
   // Handle country code selection
-  handleChangeCountryCode(countryCode) {
+  handleChangeCountryCode = (countryCode) => {
     this.setState({ countryCode: countryCode });
-  }
+  };
 
   // Handle number input
-  handleChangeNumber(e) {
+  handleChangeNumber = (e) => {
     this.setState({
       currentNumber: e.target.value,
       isValidNumber: /^([0-9]|#|\*)+$/.test(
         e.target.value.replace(/[-()\s]/g, "")
       ),
     });
-  }
+  };
 
-  handleAddUser() {
+  handleAddUser = () => {
     var n =
       "+" +
       this.state.countryCode +
@@ -94,17 +112,17 @@ class App extends React.Component {
       .fail(function (error) {
         alert(JSON.stringify(error));
       });
-  }
+  };
 
-  fetchUsers() {
+  fetchUsers = () => {
     $.getJSON("/fetchUsers").done((data) => {
       console.log(data);
     });
-  }
+  };
 
   // Make an outbound call with the current number,
   // or hang up the current call
-  handleToggleCall() {
+  handleToggleCall = () => {
     if (!this.state.onPhone) {
       this.setState({
         muted: false,
@@ -118,20 +136,9 @@ class App extends React.Component {
       console.log(n);
 
       console.log("about to make conenction");
-      let connection = Twilio.Device.connect({ number: n });
+      let connection = Device.connect({ number: n });
       this.setState({ log: "Calling " + n, status: connection.status() });
       console.log(this.state.participants);
-      connection.on("accept", () => {
-        this.setState((prevState) => ({
-          participants: [...prevState.participants, "You"],
-        }));
-        console.log(this.state.participants);
-        console.log(connection.parameters);
-      });
-
-      connection.on("incoming", function (n) {
-        console.log("incoming");
-      });
 
       console.log(connection.status());
       connection.on("error", function () {
@@ -139,9 +146,9 @@ class App extends React.Component {
       });
     } else {
       // hang up call in progress
-      Twilio.Device.disconnectAll();
+      Device.disconnectAll();
     }
-  }
+  };
 
   render() {
     return (
@@ -173,7 +180,6 @@ class App extends React.Component {
         <AddUser handleOnClick={this.handleAddUser} />
         <div>
           <label>Active Users</label>
-          <Refresh handleOnClick={this.fetchUsers} />
           <UserList users={this.state.participants} />
         </div>
       </div>
