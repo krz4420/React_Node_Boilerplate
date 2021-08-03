@@ -18,7 +18,7 @@ class App extends React.Component {
       muted: false,
       log: "Connecting...",
       onPhone: false,
-      participants: [],
+      participants: ["You", "6313881028"],
       countryCode: "1",
       currentNumber: "",
       isValidNumber: false,
@@ -52,27 +52,27 @@ class App extends React.Component {
     });
 
     // Fetch Twilio capability token from our Node.js server
-    $.getJSON("/token")
-      .done((data) => {
-        console.log("Setting up token");
-        Device.setup(data.token);
-        console.log("Done with twilio setup");
-        this.setState({ log: "Connected" });
-      })
-      .fail(console.log("Did not work"));
+    $.getJSON("/token").done((data) => {
+      Device.setup(data.token);
+    });
 
     Device.ready(() => {
-      console.log("Ready");
-      this.setState({ log: "Connected" });
+      this.setState({ log: "Device Ready" });
+    });
+
+    Device.on("connect", () => {
+      console.log("in on connection");
+      this.setState({ log: "Device Ready" });
     });
 
     // Configure event handlers for Twilio Device
     Device.disconnect(() => {
+      console.log("in this disconnect function");
       this.setState({
         onPhone: false,
         log: "Call ended.",
-        participants: [],
       });
+      setTimeout(() => this.setState({ log: "Device Ready" }), 3000);
     });
   };
   // ****** End of Component Did Mount
@@ -104,19 +104,6 @@ class App extends React.Component {
       data: {
         To: n,
       },
-    })
-      .done(function (data) {
-        // The JSON sent back from the server will contain a success message
-        alert(data.message);
-      })
-      .fail(function (error) {
-        alert(JSON.stringify(error));
-      });
-  };
-
-  fetchUsers = () => {
-    $.getJSON("/fetchUsers").done((data) => {
-      console.log(data);
     });
   };
 
@@ -153,37 +140,37 @@ class App extends React.Component {
   render() {
     return (
       <div id="dialer">
-        <div id="dial-form" className="input-group input-group-sm">
-          <CountrySelectBox
-            countries={this.state.countries}
-            countryCode={this.state.countryCode}
-            handleOnChange={this.handleChangeCountryCode}
-          />
-
-          <NumberInputText
-            currentNumber={this.state.currentNumber}
-            handleOnChange={this.handleChangeNumber}
-          />
-        </div>
         <div className="controls">
-          <CallButton
-            handleOnClick={this.handleToggleCall}
-            disabled={!this.state.isValidNumber}
-            onPhone={this.state.onPhone}
-          />
-          <LogBox
-            participans={this.state.paticipants}
-            class={this.state.log}
-            text={this.state.log}
-          />
+          <LogBox participants={this.state.paticipants} text={this.state.log} />
         </div>
-        <div>
+        <div className="float-container">
+          <div id="dial-form" className="input-group input-group-sm">
+            <CountrySelectBox
+              countries={this.state.countries}
+              countryCode={this.state.countryCode}
+              handleOnChange={this.handleChangeCountryCode}
+            />
+            <NumberInputText
+              currentNumber={this.state.currentNumber}
+              handleOnChange={this.handleChangeNumber}
+            />
+          </div>
+          <div className="call-button">
+            <CallButton
+              handleOnClick={this.handleToggleCall}
+              disabled={!this.state.isValidNumber}
+              onPhone={this.state.onPhone}
+            />
+          </div>
+        </div>
+
+        <div class="participantList">
           <label>Active Users</label>
+          <UserList users={this.state.participants} />
           <AddUser
             users={this.state.participants.length}
             handleOnClick={this.handleAddUser}
           />
-          <UserList users={this.state.participants} />
         </div>
       </div>
     );

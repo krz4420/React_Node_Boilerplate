@@ -8,11 +8,17 @@ class UserList extends React.Component {
       ? users.map((user) => {
           return (
             <div className="item">
-              <i className="large middle aligned icon user" />
+              <div className="right floated content">
+                <button className="negative ui button">Remove</button>
+              </div>
+              <div className="right floated content">
+                <button className="ui icon button">
+                  <i className="microphone icon"></i>
+                </button>
+              </div>
+              <i className="ui middle aligned large icon user" />
               <div className="content">
-                <div className="description">
-                  <p>{user}</p>
-                </div>
+                <div className="description">{user}</div>
               </div>
             </div>
           );
@@ -21,7 +27,9 @@ class UserList extends React.Component {
   }
 
   render() {
-    return <div className="ui relaxed divided list">{this.renderList()}</div>;
+    return (
+      <div className="ui middle aligned divided list">{this.renderList()}</div>
+    );
   }
 }
 

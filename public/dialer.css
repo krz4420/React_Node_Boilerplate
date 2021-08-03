@@ -27,24 +27,35 @@ label:focus,
   border-radius: 30px;
 }
 
-.user {
-  display: flex;
-  flex-direction: row;
+.float-container {
+  padding: 20px;
+  width: 300px;
+  height: 100px;
+  margin: auto;
 }
 
-.controls {
-  display: flex;
-  flex-direction: row;
-  padding-top: 10px;
+.participantList {
+  background-color: rgb(186, 180, 193);
+  border-radius: 5px;
+  border: 2px solid rgb(87, 87, 87);
+  padding: 0 5px 0 5px;
+  width: 500px;
+  margin: auto;
 }
 
-.controls {
+#dial-form {
+  width: 195px;
+  margin-top: 10px;
   float: left;
 }
+.call-button {
+  width: 55px;
+  float: right;
+}
 
-.controls .btn {
-  display: block;
-  margin-bottom: 20px;
+/* 27px is the width of the user icon */
+.description {
+  margin-right: 27px;
 }
 
 .log {
@@ -56,6 +67,7 @@ label:focus,
   color: white;
   border-radius: 10px;
   width: 150px;
+  margin: auto;
 }
 
 p {
@@ -69,10 +81,10 @@ p {
   font-family: Helvetica, sans-serif;
   margin: 20px auto;
   padding: 0;
-  width: 240px;
+  width: 50%;
   text-align: center;
 }
 
-.Connected {
+.ready {
   background-color: #4267b2;
 }
