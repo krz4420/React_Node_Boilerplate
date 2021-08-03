@@ -5,7 +5,7 @@ class AddUser extends React.Component {
     return this.props.users > 1 ? (
       <button class="ui basic button" onClick={this.props.handleOnClick}>
         <i class="icon plus"></i>
-        Click To Add User "{this.props.users}"
+        Click To Add User
       </button>
     ) : (
       <div></div>
