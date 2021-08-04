@@ -18,7 +18,7 @@ class App extends React.Component {
       muted: false,
       log: "Connecting...",
       onPhone: false,
-      participants: ["You", "6313881028"],
+      participants: [],
       countryCode: "1",
       currentNumber: "",
       isValidNumber: false,
@@ -137,6 +137,18 @@ class App extends React.Component {
     }
   };
 
+  handleDeleteUser = (label) => {
+    console.log(label);
+    $.ajax({
+      url: "/removeUser",
+      method: "POST",
+      dataType: "json",
+      data: {
+        label,
+      },
+    });
+  };
+
   render() {
     return (
       <div id="dialer">
@@ -166,7 +178,10 @@ class App extends React.Component {
 
         <div class="participantList">
           <label>Active Users</label>
-          <UserList users={this.state.participants} />
+          <UserList
+            handleOnClick={this.handleDeleteUser}
+            users={this.state.participants}
+          />
           <AddUser
             users={this.state.participants.length}
             handleOnClick={this.handleAddUser}

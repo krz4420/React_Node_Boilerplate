@@ -1,15 +1,23 @@
 import React from "react";
 
 class UserList extends React.Component {
+  handleRemoveClick = (label) => {
+    this.props.handleOnClick(label);
+  };
+
   renderList() {
     const users = this.props.users;
-    console.log(users);
     return users.length !== 0
       ? users.map((user) => {
           return (
             <div className="item">
               <div className="right floated content">
-                <button className="negative ui button">Remove</button>
+                <button
+                  onClick={() => this.handleRemoveClick(user)}
+                  className="negative ui button"
+                >
+                  Remove
+                </button>
               </div>
               <div className="right floated content">
                 <button className="ui icon button">

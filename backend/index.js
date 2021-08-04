@@ -11,7 +11,7 @@ const authToken = process.env.TWILIO_AUTH_TOKEN;
 
 const socket = require("socket.io");
 let app = express();
-
+let conferenceSid;
 const server = http.createServer(app);
 const port = process.env.PORT || 3000;
 server.listen(port, () => {
@@ -78,6 +78,7 @@ app.post("/voice", (request, response) => {
   );
   response.type("text/xml");
   response.send(twiml.toString());
+  console.log(response.body);
 });
 
 // adds callee to the conference if they accept the outbound call
@@ -103,12 +104,19 @@ app.post("/addUser", (req, res) => {
   });
 });
 
+app.post("/removeUser", (req, res) => {
+  const client = new twilio(accountSid, authToken);
+  client.conferences(conferenceSid).participants(req.body.label).remove();
+  console.log(req.body.label);
+});
+
 // status callback endpoint where socket.io passes list to frontend
 app.post("/fetchUsers", (req) => {
   console.log("fetching");
+  conferenceSid = req.body.ConferenceSid;
   const client = new twilio(accountSid, authToken);
   client
-    .conferences(req.body.ConferenceSid)
+    .conferences(conferenceSid)
     .participants.list()
     .then((participants) => io.emit("fetchUserList", participants));
 });
