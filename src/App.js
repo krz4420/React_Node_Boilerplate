@@ -44,11 +44,36 @@ class App extends React.Component {
 
     socket.on("fetchUserList", (data) => {
       this.setState({ participants: [] });
-      data.forEach((participant) =>
+      data.forEach((participant) => {
         this.setState((prevState) => ({
-          participants: [...prevState.participants, participant.label],
-        }))
+          participants: [
+            ...prevState.participants,
+            {
+              label: participant.label,
+              isMuted: participant.muted,
+              isSpeaking: false,
+            },
+          ],
+        }));
+      });
+    });
+
+    // need to fix this... this only just copies to state
+    socket.on("speech", (data) => {
+      console.log("Getting in speech socketio");
+      console.log(data);
+      const index = this.state.participants.findIndex(
+        (user) => user.label === data.label
       );
+      console.log(index);
+
+      let participantList = [...this.state.participants];
+      let mutatedParticipant = { ...participantList[index] };
+      mutatedParticipant.isSpeaking = data.isSpeaking;
+      participantList[index] = mutatedParticipant;
+      this.setState({ participants: participantList });
+
+      console.log(this.state.participants);
     });
 
     // Fetch Twilio capability token from our Node.js server
@@ -137,6 +162,18 @@ class App extends React.Component {
     }
   };
 
+  handleMuteUser = (label, isMuted) => {
+    $.ajax({
+      url: "/muteUser",
+      method: "POST",
+      dataType: "json",
+      data: {
+        label,
+        isMuted,
+      },
+    });
+  };
+
   handleDeleteUser = (label) => {
     console.log(label);
     $.ajax({
@@ -179,7 +216,8 @@ class App extends React.Component {
         <div class="participantList">
           <label>Active Users</label>
           <UserList
-            handleOnClick={this.handleDeleteUser}
+            handleOnMute={this.handleMuteUser}
+            handleOnRemove={this.handleDeleteUser}
             users={this.state.participants}
           />
           <AddUser

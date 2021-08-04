@@ -72,13 +72,12 @@ app.post("/voice", (request, response) => {
     {
       participantLabel: "You",
       statusCallback: `${process.env.MY_URL}/fetchUsers`,
-      statusCallbackEvent: "join leave",
+      statusCallbackEvent: "join leave mute speaker",
     },
     "conference"
   );
   response.type("text/xml");
   response.send(twiml.toString());
-  console.log(response.body);
 });
 
 // adds callee to the conference if they accept the outbound call
@@ -104,21 +103,43 @@ app.post("/addUser", (req, res) => {
   });
 });
 
-app.post("/removeUser", (req, res) => {
+// Endpoint to remove a participant from the conference
+app.post("/removeUser", (req) => {
   const client = new twilio(accountSid, authToken);
   client.conferences(conferenceSid).participants(req.body.label).remove();
-  console.log(req.body.label);
+});
+
+// Endpoint to mute/unmute a participant
+app.post("/muteUser", (req) => {
+  const client = new twilio(accountSid, authToken);
+  const inverted = req.body.isMuted === "false" ? true : false; // not passed as a boolean so have to convert
+  client
+    .conferences(conferenceSid)
+    .participants(req.body.label)
+    .update({ muted: inverted });
 });
 
 // status callback endpoint where socket.io passes list to frontend
 app.post("/fetchUsers", (req) => {
-  console.log("fetching");
-  conferenceSid = req.body.ConferenceSid;
-  const client = new twilio(accountSid, authToken);
-  client
-    .conferences(conferenceSid)
-    .participants.list()
-    .then((participants) => io.emit("fetchUserList", participants));
+  console.log(req.body);
+  if (req.body.StatusCallbackEvent === "participant-speech-start") {
+    io.emit("speech", { label: req.body.ParticipantLabel, isSpeaking: true });
+    console.log("Speaking Starts");
+    console.log(req.body.label, req.body.isSpeaking);
+    console.log("___________");
+  } else if (req.body.StatusCallbackEvent === "participant-speech-stop") {
+    io.emit("speech", { label: req.body.ParticipantLabel, isSpeaking: false });
+    console.log("Speaking ends");
+    console.log(req.body.label, req.body.isSpeaking);
+    console.log("___________");
+  } else {
+    conferenceSid = req.body.ConferenceSid;
+    const client = new twilio(accountSid, authToken);
+    client
+      .conferences(conferenceSid)
+      .participants.list()
+      .then((participants) => io.emit("fetchUserList", participants));
+  }
 });
 
 module.exports = app;
