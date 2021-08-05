@@ -5,11 +5,12 @@ class LogBox extends React.Component {
     return (
       <div>
         <div
-          className={`log ${this.props.text === "Device Ready" ? "ready" : ""}`}
+          className={`log ${this.props.text === `Device Ready` ? "ready" : ""}`}
         >
           {this.props.text}
-          {this.props.confNameExists === 0
-            ? `:Enter a Conference Name to Call`
+          <br />
+          {this.props.confNameExists === 0 && this.props.text === "Device Ready"
+            ? "Enter a Conference Name to Call"
             : ""}
         </div>
       </div>
