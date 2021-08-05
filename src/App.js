@@ -1,15 +1,17 @@
 import React from "react";
-import NumberInputText from "./NumberInputText";
-import LogBox from "./LogBox";
-import CountrySelectBox from "./CountrySelectBox";
-import AddUser from "./AddUser";
-import CallButton from "./CallButton";
-import UserList from "./UserList";
+import NumberInputText from "./Components/NumberInputText";
+import LogBox from "./Components/LogBox";
+import CountrySelectBox from "./Components/CountrySelectBox";
+import AddUser from "./Components/AddUser";
+import CallButton from "./Components/CallButton";
+import UserList from "./Components/UserList";
+import Input from "./Components/Input";
+
 import $ from "jquery";
 import { io } from "socket.io-client";
 
 const { Device } = require("twilio-client");
-const socket = io("https://55eec8196410.ngrok.io");
+const socket = io(process.env.MY_URL);
 
 class App extends React.Component {
   constructor(props) {
@@ -22,6 +24,7 @@ class App extends React.Component {
       countryCode: "1",
       currentNumber: "",
       isValidNumber: false,
+      confName: "",
       countries: [
         { name: "United States", cc: "1", code: "us" },
         { name: "Great Britain", cc: "44", code: "gb" },
@@ -41,7 +44,6 @@ class App extends React.Component {
   // Initialize after component creation
   componentDidMount = () => {
     console.log("Componenet Did mount");
-
     socket.on("fetchUserList", (data) => {
       this.setState({ participants: [] });
       data.forEach((participant) => {
@@ -60,20 +62,23 @@ class App extends React.Component {
 
     // need to fix this... this only just copies to state
     socket.on("speech", (data) => {
-      console.log("Getting in speech socketio");
-      console.log(data);
+      console.log("Speech socketio");
+
+      // Finding the index of participant speaking in the array
       const index = this.state.participants.findIndex(
         (user) => user.label === data.label
       );
-      console.log(index);
 
-      let participantList = [...this.state.participants];
-      let mutatedParticipant = { ...participantList[index] };
-      mutatedParticipant.isSpeaking = data.isSpeaking;
-      participantList[index] = mutatedParticipant;
-      this.setState({ participants: participantList });
-
-      console.log(this.state.participants);
+      this.setState(({ participants }) => ({
+        participants: [
+          ...participants.slice(0, index),
+          {
+            ...participants[index],
+            isSpeaking: data.isSpeaking,
+          },
+          ...participants.slice(index + 1),
+        ],
+      }));
     });
 
     // Fetch Twilio capability token from our Node.js server
@@ -102,9 +107,27 @@ class App extends React.Component {
   };
   // ****** End of Component Did Mount
 
+  handleOnSearchSubmit = (term) => {
+    console.log("In here");
+    this.setState({ confName: term });
+    socket.emit("conferenceName", { confName: term });
+  };
+
   // Handle country code selection
   handleChangeCountryCode = (countryCode) => {
     this.setState({ countryCode: countryCode });
+  };
+
+  handleDeleteUser = (label) => {
+    console.log(label);
+    $.ajax({
+      url: "/removeUser",
+      method: "POST",
+      dataType: "json",
+      data: {
+        label,
+      },
+    });
   };
 
   // Handle number input
@@ -128,38 +151,9 @@ class App extends React.Component {
       dataType: "json",
       data: {
         To: n,
+        ConfName: this.state.confName,
       },
     });
-  };
-
-  // Make an outbound call with the current number,
-  // or hang up the current call
-  handleToggleCall = () => {
-    if (!this.state.onPhone) {
-      this.setState({
-        muted: false,
-        onPhone: true,
-      });
-      // make outbound call with current number
-      var n =
-        "+" +
-        this.state.countryCode +
-        this.state.currentNumber.replace(/\D/g, "");
-      console.log(n);
-
-      console.log("about to make conenction");
-      let connection = Device.connect({ number: n });
-      this.setState({ log: "Calling " + n, status: connection.status() });
-      console.log(this.state.participants);
-
-      console.log(connection.status());
-      connection.on("error", function () {
-        console.log("error");
-      });
-    } else {
-      // hang up call in progress
-      Device.disconnectAll();
-    }
   };
 
   handleMuteUser = (label, isMuted) => {
@@ -174,21 +168,44 @@ class App extends React.Component {
     });
   };
 
-  handleDeleteUser = (label) => {
-    console.log(label);
-    $.ajax({
-      url: "/removeUser",
-      method: "POST",
-      dataType: "json",
-      data: {
-        label,
-      },
-    });
+  handleToggleCall = () => {
+    if (!this.state.onPhone) {
+      this.setState({
+        muted: false,
+        onPhone: true,
+      });
+      // make outbound call with current number
+      var n =
+        "+" +
+        this.state.countryCode +
+        this.state.currentNumber.replace(/\D/g, "");
+      console.log(n);
+
+      console.log("about to make conenction");
+      let connection = Device.connect({
+        number: n,
+        confName: this.state.confName,
+      });
+      this.setState({ log: "Calling " + n, status: connection.status() });
+      console.log(this.state.participants);
+
+      console.log(connection.status());
+      connection.on("error", function () {
+        console.log("error");
+      });
+    } else {
+      // hang up call in progress
+      Device.disconnectAll();
+    }
   };
 
   render() {
     return (
       <div id="dialer">
+        {this.state.confName ? null : (
+          <Input onSubmit={this.handleOnSearchSubmit} />
+        )}
+
         <div className="controls">
           <LogBox participants={this.state.paticipants} text={this.state.log} />
         </div>
