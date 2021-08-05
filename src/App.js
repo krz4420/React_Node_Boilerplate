@@ -17,7 +17,6 @@ class App extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      muted: false,
       log: "Connecting...",
       onPhone: false,
       participants: [],
@@ -60,9 +59,9 @@ class App extends React.Component {
       });
     });
 
-    // need to fix this... this only just copies to state
     socket.on("speech", (data) => {
       console.log("Speech socketio");
+      console.log(data);
 
       // Finding the index of participant speaking in the array
       const index = this.state.participants.findIndex(
@@ -107,13 +106,20 @@ class App extends React.Component {
   };
   // ****** End of Component Did Mount
 
+  // Check to see if confName is already in use by passing a callback and set state to confName if not
   handleOnSearchSubmit = (term) => {
-    console.log("In here");
-    this.setState({ confName: term });
-    socket.emit("conferenceName", { confName: term });
+    socket.emit("conferenceName", { confName: term }, (response) => {
+      if (response.status == "ok") {
+        this.setState({ confName: term });
+      } else {
+        // Using basic alert can make this look better later but functions as I want it too
+        alert(
+          "This conference name has already been taken. Please Select a new one"
+        );
+      }
+    });
   };
 
-  // Handle country code selection
   handleChangeCountryCode = (countryCode) => {
     this.setState({ countryCode: countryCode });
   };
@@ -130,7 +136,6 @@ class App extends React.Component {
     });
   };
 
-  // Handle number input
   handleChangeNumber = (e) => {
     this.setState({
       currentNumber: e.target.value,
@@ -141,6 +146,11 @@ class App extends React.Component {
   };
 
   handleAddUser = () => {
+    if (!this.isValidNumber) {
+      alert("Please Enter a Valid Number to add");
+      return;
+    }
+
     var n =
       "+" +
       this.state.countryCode +
@@ -170,18 +180,25 @@ class App extends React.Component {
 
   handleToggleCall = () => {
     if (!this.state.onPhone) {
-      this.setState({
-        muted: false,
-        onPhone: true,
-      });
-      // make outbound call with current number
+      if (!this.state.confName) {
+        alert("Please Enter Conference Name");
+        return;
+      }
+
       var n =
         "+" +
         this.state.countryCode +
         this.state.currentNumber.replace(/\D/g, "");
-      console.log(n);
 
       console.log("about to make conenction");
+
+      if (!this.state.isValidNumber) {
+        alert("Please Enter a Valid Number");
+        return;
+      }
+      this.setState({
+        onPhone: true,
+      });
       let connection = Device.connect({
         number: n,
         confName: this.state.confName,
@@ -195,7 +212,7 @@ class App extends React.Component {
       });
     } else {
       // hang up call in progress
-      Device.disconnectAll();
+      Device.disconnectAll(); // may cause number to disconnect from all conferences?
     }
   };
 

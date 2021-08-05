@@ -37,10 +37,20 @@ io.on("connection", (socket) => {
   if (!users.includes(socket.id)) {
     users.push({ socketID: socket.id, confName: "" });
   }
-  socket.on("conferenceName", (data) => {
-    users[index("socketID", socket.id)].confName = data.confName;
-    console.log("______");
-    console.log(users);
+  socket.on("conferenceName", (data, callback) => {
+    if (index("confName", data.confName) == -1) {
+      users[index("socketID", socket.id)].confName = data.confName;
+      callback({
+        status: "ok",
+      });
+      console.log("______");
+      console.log(users);
+    } else {
+      console.log("Error");
+      callback({
+        status: "error",
+      });
+    }
   });
   console.log(users);
   socket.on("disconnect", () => {

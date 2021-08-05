@@ -4,12 +4,16 @@ class Input extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      name: "",
+      term: "",
     };
   }
 
   onFormSubmit = (event) => {
     event.preventDefault();
+    if (this.state.term.length == 0) {
+      alert("Please Enter a Conference Name Before Submitting");
+      return;
+    }
     this.props.onSubmit(this.state.term);
     console.log(this.state.term);
   };
@@ -18,7 +22,7 @@ class Input extends React.Component {
     return (
       <div className="ui segment">
         <form onSubmit={this.onFormSubmit} className="ui form">
-          <div class="field">
+          <div className="field">
             <label>Enter a Name For Your Conference Call</label>
             <input
               type="text"
@@ -27,7 +31,7 @@ class Input extends React.Component {
               placeholder="Conference 123"
             />
           </div>
-          <button class="ui button" type="submit">
+          <button className="ui button" type="submit">
             Submit
           </button>
         </form>
