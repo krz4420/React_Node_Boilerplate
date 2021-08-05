@@ -224,7 +224,11 @@ class App extends React.Component {
         )}
 
         <div className="controls">
-          <LogBox participants={this.state.paticipants} text={this.state.log} />
+          <LogBox
+            confNameExists={this.state.confName.length}
+            participants={this.state.paticipants}
+            text={this.state.log}
+          />
         </div>
         <div className="float-container">
           <div id="dial-form" className="input-group input-group-sm">
@@ -248,7 +252,10 @@ class App extends React.Component {
         </div>
 
         <div class="participantList">
-          <label>Active Users</label>
+          <label>
+            Active Users
+            {this.state.confName.length > 0 ? ` in ${this.state.confName}` : ""}
+          </label>
           <UserList
             handleOnMute={this.handleMuteUser}
             handleOnRemove={this.handleDeleteUser}

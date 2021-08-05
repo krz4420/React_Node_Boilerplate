@@ -8,6 +8,9 @@ class LogBox extends React.Component {
           className={`log ${this.props.text === "Device Ready" ? "ready" : ""}`}
         >
           {this.props.text}
+          {this.props.confNameExists === 0
+            ? `:Enter a Conference Name to Call`
+            : ""}
         </div>
       </div>
     );
