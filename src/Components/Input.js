@@ -28,7 +28,7 @@ class Input extends React.Component {
               type="text"
               value={this.state.term}
               onChange={(e) => this.setState({ term: e.target.value })}
-              placeholder="Conference 123"
+              placeholder="Ex:Conference 123"
             />
           </div>
           <button className="ui button" type="submit">
